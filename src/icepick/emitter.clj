@@ -81,7 +81,7 @@
      ["import android.os.Bundle;"]
      ["import android.os.Parcelable;"]
      ["import icepick.StateHelper;"]
-     ["public class " dollar-name " implements " helper-type " {"]
+     ["public class " dollar-name suffix " implements " helper-type " {"]
      [""]
      ["  private static final String BASE_KEY = \"" qualified-dollar-name ".\";"]
      ["  private final " helper-type " parent = " parent-helper]
@@ -106,11 +106,9 @@
         element (:element class)
         file-object (.createSourceFile
                      *filer* qualified-dotted-name (into-array Element [element]))
-        android-view? #_(.isAssignable
-                         *types* (.asType element)
-                         (.asType (.getTypeElement *elements* "android.view.View")))
-        #_remove-me false
-        _ (def quiz (->java (brew-source class fields android-view?)))]
+        android-view? (.isAssignable
+                       *types* (.asType element)
+                       (.asType (.getTypeElement *elements* "android.view.View")))]
     [class fields]
     (doto (.openWriter file-object)
       (.write (->java (brew-source class fields android-view?)))

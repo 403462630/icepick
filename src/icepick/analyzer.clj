@@ -46,11 +46,11 @@
    ["java.util.ArrayList<java.lang.Integer>" "IntegerArrayList"]
    ["java.util.ArrayList<java.lang.String>" "StringArrayList"]
    ["java.util.ArrayList<java.lang.CharSequence>" "CharSequenceArrayList"]
-;   ["java.util.ArrayList<? extends android.os.Parcelable>" "ParcelableArrayList"]
-;   ["android.util.SparseArray<? extends android.os.Parcelable>" "SparseParcelableArray"]
-;   ["android.os.Bundle" "Bundle"]
-;   ["android.os.Parcelable" "Parcelable"]
-;   ["android.os.Parcelable[]" "ParcelableArray"]
+   ["java.util.ArrayList<? extends android.os.Parcelable>" "ParcelableArrayList"]
+   ["android.util.SparseArray<? extends android.os.Parcelable>" "SparseParcelableArray"]
+   ["android.os.Bundle" "Bundle"]
+   ["android.os.Parcelable" "Parcelable"]
+   ["android.os.Parcelable[]" "ParcelableArray"]
    ["java.io.Serializable" "Serializable"]])
 
 (defmulti ->type

@@ -34,9 +34,10 @@
                (.compilesWithoutError)))))
   ([input output & outputs]
      (let [[first & rest] (seq (map make-source (cons output outputs)))]
-       (-> (check-compiles input)
-           (.and)
-           (.generatesSources first (into-array JavaFileObject rest))))))
+       (when-let [compiles (check-compiles input)]
+         (-> compiles
+             (.and)
+             (.generatesSources first (into-array JavaFileObject rest)))))))
 
 (deftest a-test
   (testing "Invalid modifier"
@@ -55,7 +56,6 @@
        "import icepick.Icicle;"
        "public class Test {"
        "  @Icicle int thing;"
-       "  @Icicle String str;"
        "}"]}
      {:file "test.Test$$Icicle"
       :content

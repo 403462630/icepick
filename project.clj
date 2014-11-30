@@ -6,5 +6,5 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [com.github.frankiesardo/icepick "2.3.6"]]
   :profiles {:dev {:dependencies [[com.google.testing.compile/compile-testing "0.4"]]}
-             :provided {:dependencies [[com.google.android/android "4.1.1.4"]]}
-             :uberjar {:aot :all}})
+             :provided {:dependencies [[com.google.android/android "4.1.1.4"]]}}
+  :aot :all)

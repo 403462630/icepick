@@ -144,6 +144,7 @@
                (recur (.getSuperclass class-element)))))))))
 
 (defn- enclosing-class [^TypeElement elem]
+  (def foo elem)
   (when (some #{Modifier/PRIVATE} (.getModifiers elem))
     (log-error elem "Enclosing class must not be private"))
   (let [package (package-name elem)
@@ -192,6 +193,6 @@
     {:name (-> elem .getSimpleName .toString)
      :type (str type)
      :type-cast (type-cast type bundle-method)
-     :enclosing-class (enclosing-class (.getEnclosingElement elem))
+     :enclosing-class (enclosing-class (cast TypeElement (.getEnclosingElement elem)))
      :bundle-method bundle-method
      :primitive? (-> type .getKind .isPrimitive)}))

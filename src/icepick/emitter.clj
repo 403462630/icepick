@@ -7,26 +7,34 @@
 
 (def ^:private suffix Icepick/SUFFIX)
 
+(defn- ->java [coll & {:keys [indent]}]
+  (->> coll
+       (map (partial apply str indent))
+       (string/join "\n")))
+
 ;; Restore state
 
 (def ^:private start-restore-view
-  ["Bundle savedInstanceState = (Bundle) state;"
-   "Parcelable superState = savedInstanceState.getParcelable(BASE_KEY + \"$$SUPER\");"])
+  [["Bundle savedInstanceState = (Bundle) state;"]
+   ["Parcelable superState = savedInstanceState.getParcelable(BASE_KEY + \"$$SUPER\");"]])
 
 (def ^:private start-restore-obj
-  ["if (state == null) {"
-   "  return null;"
-   "}"
-   "Bundle savedInstanceState = state;"])
+  [["if (state == null) {"]
+   ["  return null;"]
+   ["}"]
+   ["Bundle savedInstanceState = state;"]])
 
 (def ^:private end-restore-view
-  ["return parent.restoreInstanceState(target, superState);"])
+  [["return parent.restoreInstanceState(target, superState);"]])
 
 (def ^:private end-restore-obj
-  ["return parent.restoreInstanceState(target, savedInstanceState);"])
+  [["return parent.restoreInstanceState(target, savedInstanceState);"]])
 
-(defn- restore [fields]
-  [])
+(defn- restore [{method :bundle-method cast :type-cast name :name}]
+  (let [key (str "BASE_KEY + \"" name "\"")]
+    [["if (savedInstanceState.containsKey(" key ")) {"]
+     ["  target." name " = " cast " savedInstanceState.get" method "(" key ");"]
+     ["}"]]))
 
 ;; Save state
 
@@ -76,29 +84,28 @@
      [""]
      ["  public " state " restoreInstanceState(Object obj, " state " state) {"]
      ["    " target " target = (" target ") obj;"]
-     [(join-and-indent (if android-view? start-restore-view start-restore-obj))]
-     [(join-and-indent (restore fields))]
-     [(join-and-indent (if android-view? end-restore-view end-restore-obj))]
+     [(->java (if android-view? start-restore-view start-restore-obj) :indent "    ")]
+     [(->java (map restore fields) :indent "    ")]
+     [(->java (if android-view? end-restore-view end-restore-obj) :indent "    ")]
      ["  }"]
      [""]
      ["  public " state "saveInstanceState(Object obj, " state " state) {"]
      ["    " target " target = (" target ") obj;"]
-     [(string/join "\n" (start-restore android-view?))]
-     [(string/join "\n" (restore fields))]
-     [(string/join "\n" (end-restore android-view?))]
+;     [(string/join "\n" (start-restore android-view?))]
+;     [(string/join "\n" (restore fields))]
+;     [(string/join "\n" (end-restore android-view?))]
      ["  }"]
      ]))
 
 (defn emit-class! [[class fields]]
-  (let [qualified-dotted-name (str (:package class) "." (:dotted-name class) suffix)
-        element (:element class)
-        file-object (.createSourceFile *filer* qualified-dotted-name element)
-        android-view? (.isAssignable
-                       *types* (.asType element)
-                       (.asType (.getTypeElement *elements* "android.view.View")))]
-    (doto (.openWriter file-object)
-      (.write (->> (brew-source class fields android-view?)
-                   (map string/join)
-                   (string/join "\n")))
-      (.flush)
-      (.close))))
+  [class fields]
+  #_(let [qualified-dotted-name (str (:package class) "." (:dotted-name class) suffix)
+          element (:element class)
+          file-object (.createSourceFile *filer* qualified-dotted-name element)
+          android-view? (.isAssignable
+                         *types* (.asType element)
+                         (.asType (.getTypeElement *elements* "android.view.View")))]
+      (doto (.openWriter file-object)
+        (.write (->java (brew-source class fields android-view?)))
+        (.flush)
+        (.close))))

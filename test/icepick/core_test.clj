@@ -14,7 +14,7 @@
 (defn- icepick-processors []
   [(IcepickProcessor.)])
 
-(defn- make-source [{:keys [file content]}]
+(defn- make-source [[file content]]
   (JavaFileObjects/forSourceString file (string/join "\n" content)))
 
 (defn- check-fails [input]
@@ -42,23 +42,21 @@
 (deftest a-test
   (testing "Invalid modifier"
     (check-fails
-     {:file "test.Test"
-      :content ["package test;"
-                "import icepick.Icicle;"
-                "public class Test {"
-                "  @Icicle private int thing;"
-                "}"]}))
+     ["test.Test"
+      ["package test;"
+       "import icepick.Icicle;"
+       "public class Test {"
+       "  @Icicle private int thing;"
+       "}"]]))
   (testing "Simple"
     (check-compiles
-     {:file "test.Test"
-      :content
+     ["test.Test"
       ["package test;"
        "import icepick.Icicle;"
        "public class Test {"
        "  @Icicle int thing;"
-       "}"]}
-     {:file "test.Test$$Icicle"
-      :content
+       "}"]]
+     ["test.Test$$Icicle"
       ["package test;"
        "import android.os.Bundle;"
        "import android.os.Parcelable;"
@@ -84,41 +82,41 @@
        "    outState.putInt(BASE_KEY + \"thing\", target.thing);"
        "    return outState;"
        "  }"
-       "}"]}))
+       "}"]]))
   #_(testing "Parent"
       (check-compiles
-       {:file "test.Test"
-        :content ["package test;"
-                  "import icepick.Icicle;"
-                  "public class Test<T> {"
-                  "  @Icicle String field1;"
-                  "  static class Inner extends Test<String> {"
-                  "    @Icicle int field2;"
-                  "    @Icicle java.util.ArrayList<String> field3;"
-                  "  }"
-                  "}"]}
-       {:file "test.Test$$Icicle"
-        :content ["package test;"
-                  "import android.os.Bundle;"
-                  "import android.os.Parcelable;"
-                  "import icepick.StateHelper;"
-                  "public class Test$$Icicle implements StateHelper<Bundle> {"
-                  "  private static final String BASE_KEY = \"test.Test$$Icicle.\";"
-                  "  private final StateHelper<Bundle> parent = (StateHelper<Bundle>) StateHelper.NO_OP;"
-                  "  public Bundle restoreInstanceState(Object obj, Bundle state) {"
-                  "    Test target = (Test) obj;"
-                  "    if (state == null) {"
-                  "      return null;"
-                  "    }"
-                  "    Bundle savedInstanceState = state;"
-                  "    target.thing = savedInstanceState.getFloat(BASE_KEY + \"thing\");"
-                  "    return parent.restoreInstanceState(target, savedInstanceState);"
-                  "  }"
-                  "  public Bundle saveInstanceState(Object obj, Bundle state) {"
-                  "    Test target = (Test) obj;"
-                  "    parent.saveInstanceState(target, state);"
-                  "    Bundle outState = state;"
-                  "    outState.putFloat(BASE_KEY + \"thing\", target.thing);"
-                  "    return outState;"
-                  "  }"
-                  "}"]})))
+       ["test.Test"
+        ["package test;"
+         "import icepick.Icicle;"
+         "public class Test<T> {"
+         "  @Icicle String field1;"
+         "  static class Inner extends Test<String> {"
+         "    @Icicle int field2;"
+         "    @Icicle java.util.ArrayList<String> field3;"
+         "  }"
+         "}"]]
+       ["test.Test$$Icicle"
+        ["package test;"
+         "import android.os.Bundle;"
+         "import android.os.Parcelable;"
+         "import icepick.StateHelper;"
+         "public class Test$$Icicle implements StateHelper<Bundle> {"
+         "  private static final String BASE_KEY = \"test.Test$$Icicle.\";"
+         "  private final StateHelper<Bundle> parent = (StateHelper<Bundle>) StateHelper.NO_OP;"
+         "  public Bundle restoreInstanceState(Object obj, Bundle state) {"
+         "    Test target = (Test) obj;"
+         "    if (state == null) {"
+         "      return null;"
+         "    }"
+         "    Bundle savedInstanceState = state;"
+         "    target.thing = savedInstanceState.getFloat(BASE_KEY + \"thing\");"
+         "    return parent.restoreInstanceState(target, savedInstanceState);"
+         "  }"
+         "  public Bundle saveInstanceState(Object obj, Bundle state) {"
+         "    Test target = (Test) obj;"
+         "    parent.saveInstanceState(target, state);"
+         "    Bundle outState = state;"
+         "    outState.putFloat(BASE_KEY + \"thing\", target.thing);"
+         "    return outState;"
+         "  }"
+         "}"]])))

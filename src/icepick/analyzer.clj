@@ -86,7 +86,6 @@
 
 ;;TODO memoize ->type ?
 (defn- bundle-method [^TypeMirror type]
-  (def foo (.getTypeElement *elements* "android.os.Parcelable"))
   (first (for [[signature method] method-dictionary
                :let [signature-type (->type signature)]
                :when (assignable? type signature-type)]

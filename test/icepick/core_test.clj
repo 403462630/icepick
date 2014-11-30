@@ -36,7 +36,7 @@
      (let [[first & rest] (seq (map make-source (cons output outputs)))]
        (-> (check-compiles input)
            (.and)
-           (.generatesSources first (into-array rest))))))
+           (.generatesSources first (into-array JavaFileObject rest))))))
 
 
 (deftest a-test

@@ -38,7 +38,6 @@
            (.and)
            (.generatesSources first (into-array JavaFileObject rest))))))
 
-
 (deftest a-test
   (testing "Invalid modifier"
     (check-fails
@@ -56,6 +55,7 @@
        "import icepick.Icicle;"
        "public class Test {"
        "  @Icicle int thing;"
+       "  @Icicle String str;"
        "}"]}
      {:file "test.Test$$Icicle"
       :content

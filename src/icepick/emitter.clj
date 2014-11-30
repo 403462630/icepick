@@ -1,7 +1,8 @@
 (ns icepick.emitter
   (:require [icepick.analyzer :refer :all]
             [clojure.string :as string])
-  (:import (icepick Icepick)))
+  (:import (icepick                     Icepick)
+           (javax.lang.model.element    Element)))
 
 (def ^:dynamic *filer*)
 
@@ -30,35 +31,38 @@
 (def ^:private end-restore-obj
   [["return parent.restoreInstanceState(target, savedInstanceState);"]])
 
-(defn- restore [{method :bundle-method cast :type-cast name :name}]
+(defn- restore [{method :bundle-method name :name cast :type-cast}]
   (let [key (str "BASE_KEY + \"" name "\"")]
     [["if (savedInstanceState.containsKey(" key ")) {"]
-     ["  target." name " = " cast " savedInstanceState.get" method "(" key ");"]
+     ["  target." name " = " cast "savedInstanceState.get" method "(" key ");"]
      ["}"]]))
 
 ;; Save state
 
 (def ^:private start-save-view
-  ["Bundle outState = new Bundle();"
-   "Parcelable superState = parent.saveInstanceState(target, state);"
-   "outState.putParcelable(BASE_KEY + \"$$SUPER\", superState);"])
+  [["Bundle outState = new Bundle();"]
+   ["Parcelable superState = parent.saveInstanceState(target, state);"]
+   ["outState.putParcelable(BASE_KEY + \"$$SUPER\", superState);"]])
 
 (def ^:private start-save-obj
-  ["parent.saveInstanceState(target, state);"
-   "Bundle outState = state;"])
+  [["parent.saveInstanceState(target, state);"]
+   ["Bundle outState = state;"]])
 
 (def ^:private end-save-view
-  ["return outState;"])
+  [["return outState;"]])
 
 (def ^:private end-save-obj
-  ["return outState;"])
+  [["return outState;"]])
 
-;;
+(defn- save [{method :bundle-method name :name primitive? :primitive?}]
+  (let [key (str "BASE_KEY + \"" name "\"")]
+    (if primitive?
+      [["outState.put" method "(" key ", target." name ");"]]
+      [["if (target." name " != null) {"]
+       ["  outState.put" method "(" key ", target." name ");"]
+       ["}"]])))
 
-(defn- join-and-indent [coll]
-  (->> coll
-       (map (partial apply str "    "))
-       (string/join "\n")))
+;; Brew
 
 (defn- brew-source [class fields android-view?]
   (let [package (:package class)
@@ -85,27 +89,30 @@
      ["  public " state " restoreInstanceState(Object obj, " state " state) {"]
      ["    " target " target = (" target ") obj;"]
      [(->java (if android-view? start-restore-view start-restore-obj) :indent "    ")]
-     [(->java (map restore fields) :indent "    ")]
+     [(->java (mapcat restore fields) :indent "    ")]
      [(->java (if android-view? end-restore-view end-restore-obj) :indent "    ")]
      ["  }"]
      [""]
-     ["  public " state "saveInstanceState(Object obj, " state " state) {"]
+     ["  public " state " saveInstanceState(Object obj, " state " state) {"]
      ["    " target " target = (" target ") obj;"]
-;     [(string/join "\n" (start-restore android-view?))]
-;     [(string/join "\n" (restore fields))]
-;     [(string/join "\n" (end-restore android-view?))]
+     [(->java (if android-view? start-save-view start-save-obj) :indent "    ")]
+     [(->java (mapcat save fields) :indent "    ")]
+     [(->java (if android-view? end-save-view end-save-obj) :indent "    ")]
      ["  }"]
-     ]))
+     ["}"]]))
 
 (defn emit-class! [[class fields]]
-  [class fields]
-  #_(let [qualified-dotted-name (str (:package class) "." (:dotted-name class) suffix)
-          element (:element class)
-          file-object (.createSourceFile *filer* qualified-dotted-name element)
-          android-view? (.isAssignable
+  (let [qualified-dotted-name (str (:package class) "." (:dotted-name class) suffix)
+        element (:element class)
+        file-object (.createSourceFile
+                     *filer* qualified-dotted-name (into-array Element [element]))
+        android-view? #_(.isAssignable
                          *types* (.asType element)
-                         (.asType (.getTypeElement *elements* "android.view.View")))]
-      (doto (.openWriter file-object)
-        (.write (->java (brew-source class fields android-view?)))
-        (.flush)
-        (.close))))
+                         (.asType (.getTypeElement *elements* "android.view.View")))
+        #_remove-me false
+        _ (def quiz (->java (brew-source class fields android-view?)))]
+    [class fields]
+    (doto (.openWriter file-object)
+      (.write (->java (brew-source class fields android-view?)))
+      (.flush)
+      (.close))))

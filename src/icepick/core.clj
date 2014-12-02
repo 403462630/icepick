@@ -10,6 +10,8 @@
    :exposes {processingEnv {:get processingEnv}}
    :main false))
 
+;;(alter-var-root #'*use-context-classloader* (constantly false))
+
 (defn -getSupportedSourceVersion [this]
   (SourceVersion/latestSupported))
 
